@@ -16,32 +16,35 @@ class FollowersListVC: UIViewController {
     var username: String!
     var collectionView: UICollectionView!
     //ask prakhar
-    var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
-    var followers: [Follower] = []
+    private var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
+    private var followers: [Follower] = []
+    private var pageNo = 1
+    private var hasMoreFollowers: Bool = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
         configureVC()
-        fetchFollowers()
+        fetchFollowers(for: username, on: pageNo)
         configureCollectionView()
         configureDataSource()
     }
     
-    private func fetchFollowers()
-    {
-        NetworkManager.shared.getFollowers(for: username, page: 1) { [weak self] result in
+    private func fetchFollowers(for username: String,  on pageNo: Int) {
+        NetworkManager.shared.getFollowers(for: username, page: pageNo) { [weak self] result in
             guard let self else { return }
             switch result {
-            case .success(let followers) :
-                self.followers = followers
-                self.updateData()
+                case .success(let followers) :
+                    print("printing 1 \(followers.count)")
+                    if(followers.count < 100) {self.hasMoreFollowers = false}
+                    self.followers.append(contentsOf: followers)
+                    self.updateData()
                 
-            case .failure(let error):
-                self.presentGHAlerOnMainThread(
-                    title: "Bad Stuff Happend!",
-                    message: error.rawValue,
-                    buttonText: "Ok"
-                )
+                case .failure(let error):
+                    self.presentGHAlerOnMainThread(
+                        title: "Bad Stuff Happend!",
+                        message: error.rawValue,
+                        buttonText: "Ok"
+                    )
             }
         }
     }
@@ -56,6 +59,7 @@ class FollowersListVC: UIViewController {
         view.addSubview(collectionView)
         collectionView.backgroundColor = .systemBackground
         collectionView.register(FollowerCell.self, forCellWithReuseIdentifier: FollowerCell.reuseId)
+        collectionView.delegate = self
     }
     
     private func createThreeColumnFlowLayout() -> UICollectionViewFlowLayout {
@@ -94,5 +98,24 @@ class FollowersListVC: UIViewController {
         DispatchQueue.main.async {
             self.dataSource.apply(snapshot,  animatingDifferences: true)
         }
+    }
+}
+
+extension FollowersListVC: UICollectionViewDelegate {
+    
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            let offsetY = scrollView.contentOffset.y
+            let contentHeight = scrollView.contentSize.height
+            let height = scrollView.frame.size.height
+            
+            print("calling content 1")
+            print("calling content 1: \(pageNo)")
+            if offsetY > contentHeight - height {
+                print("calling content")
+                guard  hasMoreFollowers else {return }
+                pageNo += 1
+                print("calling content \(pageNo)")
+                fetchFollowers(for: username, on: pageNo)
+            }
     }
 }
