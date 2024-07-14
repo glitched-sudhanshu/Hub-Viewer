@@ -12,4 +12,5 @@ enum GHError: String, Error {
     case unableToComplete = "This username created an invalid request. Please try again! 👏🏻"
     case invalidResponse = "Invalid response from the server. Please try again! 🥲"
     case invalidData = "Data received from the server was invalid. Please try again! 😕"
+    case genericError = "An unexpected error occurred, Please try again later! 😭"
 }
