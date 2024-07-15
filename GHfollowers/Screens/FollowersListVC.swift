@@ -15,7 +15,6 @@ class FollowersListVC: UIViewController {
     
     var username: String!
     var collectionView: UICollectionView!
-    //ask prakhar
     private var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
     private var followers: [Follower] = []
     private var pageNo = 1
